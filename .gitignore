@@ -20,6 +20,7 @@ yarn-error.log
 .env.test.local
 .env.production.local
 /env
+__pycache__
 
 # Editor and IDE files
 .vscode/
