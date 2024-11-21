@@ -45,13 +45,3 @@ def fetch_post_details(post_uri):
         print("Error:", e)
         return None
 
-
-# # Example usage:
-# if __name__ == "__main__":
-#     post_uri = "at://did:plc:cijycuyjpwzsyttamjy5fkkb/app.bsky.feed.post/3lbdmd624h22b"
-#     details = fetch_post_details(post_uri)
-#     if details:
-#         print("Post Details:")
-#         print("Author:", details["author"])
-#         print("Content:", details["content"])
-#         print("Posted At:", details["created_at"])
