@@ -21,6 +21,7 @@ yarn-error.log
 .env.production.local
 /env
 __pycache__
+.python-version
 
 # Editor and IDE files
 .vscode/
