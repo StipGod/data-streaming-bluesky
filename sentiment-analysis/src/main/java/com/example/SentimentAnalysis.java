@@ -1,18 +1,4 @@
-/*
- * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"). You may not use this file except in compliance
- * with the License. A copy of the License is located at
- *
- * http://aws.amazon.com/apache2.0/
- *
- * or in the "license" file accompanying this file. This file is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES
- * OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions
- * and limitations under the License.
- */
 package com.example;
-
-import java.time.Duration;
 
 import ai.djl.Application;
 import ai.djl.ModelException;
@@ -22,111 +8,82 @@ import ai.djl.repository.zoo.Criteria;
 import ai.djl.repository.zoo.ZooModel;
 import ai.djl.training.util.ProgressBar;
 
-import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.java.utils.ParameterTool;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.common.serialization.SimpleStringSchema;
+import org.apache.flink.api.common.serialization.SerializationSchema;
+import org.apache.flink.connector.kinesis.sink.KinesisStreamsSink;
+import org.apache.flink.connector.kinesis.source.KinesisStreamsSource;
+import org.apache.flink.connector.kinesis.source.KinesisStreamsSourceBuilder;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.util.Collector;
-
-import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.connector.kinesis.source.KinesisStreamsSource;
-import org.apache.flink.connector.kinesis.sink.KinesisStreamsSink;
-import org.apache.flink.api.common.serialization.SimpleStringSchema;
-import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import com.amazonaws.services.kinesisanalytics.runtime.KinesisAnalyticsRuntime;
-import org.apache.flink.streaming.api.environment.LocalStreamEnvironment;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Properties;
-import java.util.Map;
 
-/**
- * Implements a streaming version of the sentiment analysis program.
- *
- * <p>This program connects to a server socket and reads strings from the socket. The easiest way to
- * try this out is to open a text server (at port 12345) using the <i>netcat</i> tool via
- *
- * <pre>
- * nc -l 12345 on Linux or nc -l -p 12345 on Windows
- * </pre>
- *
- * <p>and run this example with the hostname and the port as arguments.
- */
 public class SentimentAnalysis {
-    private static boolean isLocal(StreamExecutionEnvironment env) {
-        return env instanceof LocalStreamEnvironment;
-    }
-
-    private static final String LOCAL_APPLICATION_PROPERTIES_RESOURCE = "resources/flink-application-properties-dev.json";
-    private static Map<String, Properties> loadApplicationProperties(StreamExecutionEnvironment env) throws IOException {
-        if (isLocal(env)) {
-            return KinesisAnalyticsRuntime.getApplicationProperties(
-                    SentimentAnalysis.class.getClassLoader()
-                            .getResource(LOCAL_APPLICATION_PROPERTIES_RESOURCE).getPath());
-        } else {
-            return KinesisAnalyticsRuntime.getApplicationProperties();
-        }
-    }
 
     public static void main(String[] args) throws Exception {
-        // the host and the port to connect to
-
-        // get the execution environment
+        // Initialize the Flink execution environment
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        KinesisStreamsSource<String> kdsSource =
-                KinesisStreamsSource.<String>builder()
-                        .setStreamArn("arn:aws:kinesis:us-east-1:700361004035:stream/Bluesky")
-                        .setDeserializationSchema(new SimpleStringSchema())
-                        .build();
 
-      //  final Map<String, Properties> applicationProperties = loadApplicationProperties(env);
-        //Properties properties = applicationProperties.get("OutputStream0");
-
-        Properties outputProperties = new Properties();
-        outputProperties.setProperty("aws.region", "us-east-1");
-        outputProperties.setProperty("aws.arn", "arn:aws:kinesis:us-east-1:700361004035:stream/flink-dynamodb");
+        // Input Kinesis Stream configuration
+        Configuration inputConfig = new Configuration();
+        inputConfig.setString("aws.region", "us-east-1");
 
 
-        KinesisStreamsSink<String> kdsSink =
-        KinesisStreamsSink.<String>builder()
-                .setStreamArn("arn:aws:kinesis:us-east-1:700361004035:stream/flink-dynamodb")
-                .setKinesisClientProperties(
-                        outputProperties
-            )
-                .setSerializationSchema(new SimpleStringSchema())
-                .setPartitionKeyGenerator(element -> String.valueOf(element.hashCode()))
+
+
+        KinesisStreamsSource<String> kinesisSource = KinesisStreamsSource.<String>builder()
+                .setStreamArn("arn:aws:kinesis:us-east-1:700361004035:stream/Bluesky") // Replace with your input stream ARN
+                .setDeserializationSchema(new SimpleStringSchema())
+                .setSourceConfig(inputConfig)
                 .build();
 
-        DataStream<String> kinesisRecordsWithEventTimeWatermarks = env.fromSource(kdsSource, WatermarkStrategy.<String>forMonotonousTimestamps().withIdleness(Duration.ofSeconds(1)), "Kinesis source")
-                .returns(TypeInformation.of(String.class))
-                .uid("custom-uid");
+        // Output Kinesis Stream configuration
+        Properties outputProperties = new Properties();
+        outputProperties.setProperty("aws.region", "us-east-1");
 
-        kinesisRecordsWithEventTimeWatermarks.sinkTo(kdsSink);
+        KinesisStreamsSink<String> kinesisSink = KinesisStreamsSink.<String>builder()
+                .setStreamArn("arn:aws:kinesis:us-east-1:700361004035:stream/flink-dynamodb") // Replace with your output stream ARN
+                .setSerializationSchema(new SimpleStringSchema())
+                .setPartitionKeyGenerator(element -> String.valueOf(element.hashCode()))
+                .setKinesisClientProperties(outputProperties) 
+                .build();
 
+        // Read data from the Kinesis source
+        DataStream<String> kinesisInput = env.fromSource(
+        kinesisSource,
+        WatermarkStrategy.<String>forMonotonousTimestamps().withIdleness(Duration.ofSeconds(1)),
+        "Kinesis Source")
+        .returns(org.apache.flink.api.common.typeinfo.Types.STRING); // Explicitly set the return type
+        // Apply sentiment analysis
+        DataStream<String> sentimentResults = kinesisInput
+                .map(new SentimentAnalysisFunction())
+                .name("Sentiment Analysis");
 
+        // Write data to the Kinesis sink
+        sentimentResults.sinkTo(kinesisSink).name("Kinesis Sink");
 
-
-        // Run inference with Flink streaming
-        //DataStream<Classifications> classifications = kinesisStream.flatMap(new SAFlatMap());
-
-        // print the results with a single thread, rather than in parallel
-        // classifications.print().setParallelism(1);
-        env.execute("SentimentAnalysis");
+        // Execute the Flink job
+        env.execute("Sentiment Analysis Pipeline");
     }
-    public static class SAFlatMap implements FlatMapFunction<String, Classifications> {
 
+    // MapFunction for sentiment analysis
+    public static class SentimentAnalysisFunction implements MapFunction<String, String> {
+        private static final ObjectMapper objectMapper = new ObjectMapper();
         private static Predictor<String, Classifications> predictor;
 
-        private Predictor<String, Classifications> getOrCreatePredictor()
-                throws ModelException, IOException {
+        private Predictor<String, Classifications> getOrCreatePredictor() throws ModelException, IOException {
             if (predictor == null) {
-                Criteria<String, Classifications> criteria =
-                        Criteria.builder()
-                                .optApplication(Application.NLP.SENTIMENT_ANALYSIS)
-                                .setTypes(String.class, Classifications.class)
-                                .optProgress(new ProgressBar())
-                                .build();
+                Criteria<String, Classifications> criteria = Criteria.builder()
+                        .optApplication(Application.NLP.SENTIMENT_ANALYSIS)
+                        .setTypes(String.class, Classifications.class)
+                        .optProgress(new ProgressBar())
+                        .build();
                 ZooModel<String, Classifications> model = criteria.loadModel();
                 predictor = model.newPredictor();
             }
@@ -134,11 +91,69 @@ public class SentimentAnalysis {
         }
 
         @Override
-        public void flatMap(String value, Collector<Classifications> out) throws Exception {
+        public String map(String value) throws Exception {
             Predictor<String, Classifications> predictor = getOrCreatePredictor();
-            Classifications classifications = predictor.predict(value);
-            out.collect(classifications);
+
+            // Parse the input JSON
+            InputRecord inputRecord = objectMapper.readValue(value, InputRecord.class);
+
+            // Perform sentiment analysis on the content field
+            Classifications result = predictor.predict(inputRecord.getContent());
+
+            // Construct the output JSON
+            OutputRecord outputRecord = new OutputRecord(
+                    inputRecord.getAuthor(),
+                    inputRecord.getContent(),
+                    inputRecord.getcreated_at(),
+                    result.best().getClassName()
+            );
+
+            return objectMapper.writeValueAsString(outputRecord);
         }
     }
 
+    // Input JSON structure
+    public static class InputRecord {
+        private String author;
+        private String content;
+        private String created_at;
+
+        // Getters and setters
+        public String getAuthor() { return author; }
+        public void setAuthor(String author) { this.author = author; }
+
+        public String getContent() { return content; }
+        public void setContent(String content) { this.content = content; }
+
+        public String getcreated_at() { return created_at; }
+        public void setcreated_at(String created_at) { this.created_at = created_at; }
+    }
+
+    // Output JSON structure
+    public static class OutputRecord {
+        private String author;
+        private String content;
+        private String created_at;
+        private String sentiment;
+
+        public OutputRecord(String author, String content, String created_at, String sentiment) {
+            this.author = author;
+            this.content = content;
+            this.created_at = created_at;
+            this.sentiment = sentiment;
+        }
+
+        // Getters and setters
+        public String getAuthor() { return author; }
+        public void setAuthor(String author) { this.author = author; }
+
+        public String getContent() { return content; }
+        public void setContent(String content) { this.content = content; }
+
+        public String getcreated_at() { return created_at; }
+        public void setcreated_at(String created_at) { this.created_at = created_at; }
+
+        public String getSentiment() { return sentiment; }
+        public void setSentiment(String sentiment) { this.sentiment = sentiment; }
+    }
 }
