@@ -2,7 +2,7 @@ plugins {
     java
     application
 }
-apply(file("../../tools/gradle/javaFormatter.gradle.kts"))
+apply(file("gradle/javaFormatter.gradle.kts"))
 
 group = "com.example"
 version = "1.0-SNAPSHOT"
@@ -16,7 +16,8 @@ dependencies {
     implementation(platform("ai.djl:bom:${property("djl_version")}"))
     implementation("ai.djl:api")
     implementation("org.apache.flink:flink-streaming-java:${property("flint_version")}")
-    implementation("org.apache.flink:flink-connector-kinesis:${property("flint_version")}")
+    implementation("org.apache.flink:flink-connector-kinesis:${property("flink_kinesis_connector")}")
+    implementation("org.apache.flink:flink-connector-base:1.20.0")
     implementation("com.amazonaws:aws-java-sdk-kinesis:${property("awsSdkVersion")}")
     implementation("com.amazonaws:aws-kinesisanalytics-runtime:1.2.0") // AWS Kinesis Analytics SDK
 

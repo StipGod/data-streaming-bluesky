@@ -101,8 +101,6 @@ public class SentimentAnalysis {
         DataStream<String> kinesisRecordsWithEventTimeWatermarks = env.fromSource(kdsSource, WatermarkStrategy.<String>forMonotonousTimestamps().withIdleness(Duration.ofSeconds(1)), "Kinesis source")
                 .returns(TypeInformation.of(String.class))
                 .uid("custom-uid");
-        System.out.println(kinesisRecordsWithEventTimeWatermarks);
-
 
         kinesisRecordsWithEventTimeWatermarks.sinkTo(kdsSink);
 
