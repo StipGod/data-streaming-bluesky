@@ -272,6 +272,29 @@ sudo systemctl status grafana-server
 
 sudo systemctl restart grafana-server
 
+## proceso de visualizacion de datos
+
+Para el proceso de visualizar datos vamos a crear una base de datos:
+
+  	• El objetivo es almacenar la data procesada de el bucket s3 creado anteriormente para poder visualizar la data en grafana
+
+![image](https://github.com/user-attachments/assets/634ad8e7-152d-4af3-8365-3a840b3368d7)
+
+
+El siguiente paso es crear un crawler que nos arrastre la información del bucket s3 (con la data procesada) a la base de datos anteriormente creada
+
+	 • Se asigna un tiempo de ejecución cada 5 minutos (minimo permitido por AWS glue crawlers) para que lleve la data a la bd
+
+![image](https://github.com/user-attachments/assets/5d08f2bf-6127-4c42-bdc0-383ab8d948b5)
+
+![image](https://github.com/user-attachments/assets/aea41aa2-f03d-44f5-90f8-6cbc56b5396a)
+
+
+Una vez el crawler es ejecutado se puede visualizar la data llevada a la base de datos
+
+![image](https://github.com/user-attachments/assets/12288f87-a8d0-478e-8f82-ae08c384a8f5)
+
+
 ### Configuracion Grafana Datasource
 
 Entrar en la maquina EC2 de Grafana e insertar el archivo de .aws credential en la siguiente ubicacion:  /usr/share/grafana/.aws/credentials
