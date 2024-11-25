@@ -276,7 +276,7 @@ sudo systemctl restart grafana-server
 
 Para el proceso de visualizar datos vamos a crear una base de datos:
 
-  	• El objetivo es almacenar la data procesada de el bucket s3 creado anteriormente para poder visualizar la data en grafana
+  	• El objetivo es traer la data procesada del bucket s3 creado anteriormente en nuestra nueva db para despues visualizar la data en grafana
 
 ![image](https://github.com/user-attachments/assets/634ad8e7-152d-4af3-8365-3a840b3368d7)
 
