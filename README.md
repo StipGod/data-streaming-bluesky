@@ -107,6 +107,98 @@ Asi se veria nuestro athena
 
 ![athena](/docs/athena.jpeg "athena")
 
+
+### Configuracion procesador de datos flink
+
+Correr la aplicación de java en una maquina EC2
+
+Crear una nueva maquina de ubuntu 24.04, importante que sea al menos large
+![flink](/docs/flink1.png)
+
+Y agregarle el profile de LabInstanceProfile en Advanced Details
+![flink](/docs/flink2.png)
+
+
+Ahora dentro de la maquina podemos clonar el repositorio para correr el codigo
+```
+git clone https://github.com/StipGod/data-streaming-bluesky
+```
+
+Antes de correr el codigo es necesario instalar java17.
+```
+sudo apt update
+```
+```
+sudo apt install openjdk-17-jdk
+```
+Ahora con esto instalado podemos proceder a correr el código
+
+**Nota:**
+Si se va a reproducir desde cero es necesario tener creados dos datastreams, uno de input y otro de output y hacer unas modificaciones de código:
+```
+nano data-streaming-bluesky/sentiment-analysis/src/main/java/com/example/SentimentAnalysis.java
+```
+Y cambiar en las lineas 41 y 51 los arn de los streams por los propios creados:
+![ec2](/docs/flink3.png)
+
+Una vez hecho esto podemos correr el código:
+```
+cd data-streaming-bluesky/sentiment-analysis/
+```
+```
+./gradlew run
+```
+### Configuración ingessta de datos
+
+En la misma maquina desde la raiz vamos a movernos al proyecto de python:
+```
+cd ~/data-streaming-bluesky/src
+```
+Instalamos pip
+```
+sudo apt install python3-pip
+```
+Instalamos para crear un ambiente virtual de python
+```
+apt install python3.12-venv
+```
+Lo creamos e iniciamos
+```
+python3 -m venv env 
+```
+```
+source env/bin/activate
+```
+
+E instalamos las librerias de python
+```
+pip install -r requirements.txt
+```
+Ahora tenemos que escribir un .env donde vamos a especficar el nombre de nuestro nuestro stream y la region:
+```
+nano .env
+```
+
+```
+REGION=YourRegion
+STREAMNAME=NameOfYourStream
+```
+
+Y finalmente podemos correr el programa:
+```
+python producer.py
+```
+### Configurar envio de los datos procesados a Athena
+
+Con el paso anterior ya tenemos todas las librerias instaladas, nos quedaria solo modificar el codigo stream-to-athena.py:
+![sta](image-1.png)
+Debemos cambiar estos parametros por los propios y finalmente correr el programa
+```
+python stream-to-athena.py
+```
+
+
+
 ### Configuracion Grafana 
 
 Instalación de Grafana en EC2 (Ubuntu)
