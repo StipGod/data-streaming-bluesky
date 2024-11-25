@@ -4,6 +4,17 @@ import json
 import time
 from datetime import datetime
 import requests
+from boto3 import client
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+stream_name = os.getenv('STREAMNAME')
+region = os.getenv('REGION')
+partition_key = 'BlueskyMessage'
+
+kinesis_client = client('kinesis', region_name=region)
+
 
 # News API Configuration
 NEWS_API_KEY = '10fb3fc6cd794d9085a56f42b506ab1b'  # Replace with your News API key
@@ -44,7 +55,13 @@ if __name__ == "__main__":
     try:
         while True:
             post_details = generate_dummy_data()
-            print(json.dumps(post_details, indent=2))  # Pretty print the generated data
-            time.sleep(10)  # Wait 10 seconds before generating the next data
+            json_post_details = json.dumps(post_details)
+            response = kinesis_client.put_record(
+            StreamName=stream_name,
+            Data=json_post_details,
+            PartitionKey=partition_key
+        )
+            print(response)
+            time.sleep(5)  # Wait 10 seconds before generating the next data
     except KeyboardInterrupt:
         print("Stopped data generation.")
