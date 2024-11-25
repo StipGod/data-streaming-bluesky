@@ -23,7 +23,7 @@ Se necesitan 2 Data Stream, a estas se les deja con la configuración predetermi
 
 ![data-streams](/docs/data-streams.jpeg "data-streams")
 
-### Configuracion Kinesis Data Streams
+### Configuracion Firehose
 
 ![firehose](/docs/firehose1.jpeg "firehose")
 ![firehose](/docs/firehose2.jpeg "firehose")
