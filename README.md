@@ -284,8 +284,8 @@ Entrar en la maquina EC2 de Grafana e insertar el archivo de .aws credential en 
 
 Despues de esto, añadir en la secion de datasource Athena, y configurarlo con los siguientes datos:
 
-![grafana](/docs/grafana1.jpeg "grafana")
+![grafana](/docs/grafana1.png "grafana")
 
-![grafana](/docs/grafana2.jpeg "grafana")
+![grafana](/docs/grafana2.png "grafana")
 
 Ya se tiene el datasource agregado. Ahora crea un dashboard nuevo con este datasource.
