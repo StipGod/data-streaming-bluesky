@@ -107,10 +107,6 @@ Asi se veria nuestro athena
 
 ![athena](/docs/athena.jpeg "athena")
 
-
-### Configuracion Grafana 
-### Configuracion Grafana 
-
 ### Configuracion Grafana 
 
 Instalación de Grafana en EC2 (Ubuntu)
@@ -183,3 +179,21 @@ sudo systemctl status grafana-server
 	•	Reiniciar Grafana:
 
 sudo systemctl restart grafana-server
+
+### Configuracion Grafana Datasource
+
+Entrar en la maquina EC2 de Grafana e insertar el archivo de .aws credential en la siguiente ubicacion:  /usr/share/grafana/.aws/credentials
+
+
+![grafana](/docs/grafana3.jpeg "grafana")
+
+![grafana](/docs/grafana4.jpeg "grafana")
+
+
+Despues de esto, añadir en la secion de datasource Athena, y configurarlo con los siguientes datos:
+
+![grafana](/docs/grafana1.jpeg "grafana")
+
+![grafana](/docs/grafana2.jpeg "grafana")
+
+Ya se tiene el datasource agregado. Ahora crea un dashboard nuevo con este datasource.
