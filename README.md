@@ -191,7 +191,7 @@ python producer.py
 ### Configurar envio de los datos procesados a Athena
 
 Con el paso anterior ya tenemos todas las librerias instaladas, nos quedaria solo modificar el codigo stream-to-athena.py:
-![sta](image-1.png)
+![sta](/docs/sta.png)
 Debemos cambiar estos parametros por los propios y finalmente correr el programa
 ```
 python stream-to-athena.py
